@@ -66,90 +66,124 @@ function loadQuestion() {
     }
 }
 
-// Daha belirgin ve okunabilir renk paletleri
+// Yüksek Kontrastlı Renk Paletleri
 function getPalette(step) {
     if (step % 3 === 1) {
-        // Kırmızı-Yeşil Kontrastı Artırıldı
+        // Kırmızı (Arka plan) - Yeşil (Sayı)
         return {
-            bgColors: ['#b91c1c', '#dc2626', '#ef4444', '#f87171'], // Canlı Kırmızı Tonları
-            targetColors: ['#047857', '#059669', '#10b981', '#34d399'] // Canlı Yeşil Tonları
+            bgColors: ['#dc2626', '#ef4444', '#f87171', '#b91c1c'],
+            targetColors: ['#16a34a', '#22c55e', '#4ade80', '#15803d']
         };
     } else if (step % 3 === 2) {
-        // Mavi-Sarı Kontrastı Artırıldı
+        // Mavi (Arka plan) - Turuncu/Sarı (Sayı)
         return {
-            bgColors: ['#1d4ed8', '#2563eb', '#3b82f6', '#60a5fa'], // Canlı Mavi Tonları
-            targetColors: ['#b45309', '#d97706', '#f59e0b', '#fbbf24'] // Canlı Sarı/Turuncu Tonları
+            bgColors: ['#2563eb', '#3b82f6', '#60a5fa', '#1d4ed8'],
+            targetColors: ['#d97706', '#f59e0b', '#fbbf24', '#b45309']
         };
     } else {
-        // Mor-Yeşil Kontrastı
+        // Mor (Arka plan) - Açık Yeşil (Sayı)
         return {
-            bgColors: ['#6b21a8', '#7e22ce', '#9333ea', '#a855f7'],
-            targetColors: ['#15803d', '#16a34a', '#22c55e']
+            bgColors: ['#7e22ce', '#9333ea', '#a855f7', '#6b21a8'],
+            targetColors: ['#22c55e', '#4ade80', '#86efac', '#15803d']
         };
     }
 }
 
-// Okunabilirliği artırılmış SVG sayı üreticisi (Matematiksel font simülasyonu)
+// 7-Segment Rakam Matris Tanımları (0-9 rakamlarını tam düzgün çizmek için)
+const DIGIT_PATTERNS = {
+    0: [1,1,1, 1,0,1, 1,0,1, 1,0,1, 1,1,1],
+    1: [0,1,0, 0,1,0, 0,1,0, 0,1,0, 0,1,0],
+    2: [1,1,1, 0,0,1, 1,1,1, 1,0,0, 1,1,1],
+    3: [1,1,1, 0,0,1, 1,1,1, 0,0,1, 1,1,1],
+    4: [1,0,1, 1,0,1, 1,1,1, 0,0,1, 0,0,1],
+    5: [1,1,1, 1,0,0, 1,1,1, 0,0,1, 1,1,1],
+    6: [1,1,1, 1,0,0, 1,1,1, 1,0,1, 1,1,1],
+    7: [1,1,1, 0,0,1, 0,0,1, 0,0,1, 0,0,1],
+    8: [1,1,1, 1,0,1, 1,1,1, 1,0,1, 1,1,1],
+    9: [1,1,1, 1,0,1, 1,1,1, 0,0,1, 1,1,1]
+};
+
+// Noktalardan Oluşan Düzgün Sayı Üreticisi
 function generateIshiharaNumberSVG(targetNumber, step) {
     const palette = getPalette(step);
     let svgContent = `<svg viewBox="0 0 200 200" width="100%" height="100%">`;
     svgContent += `<circle cx="100" cy="100" r="100" fill="${palette.bgColors[0]}" />`;
 
-    // Sayıyı oluşturan koordinat kalıpları (Örn: 10-99 arası rakamların hatları)
-    let dots = [];
+    // 1. Düzgün Rakam Noktalarını Oluştur
+    const tens = Math.floor(targetNumber / 10);
+    const ones = targetNumber % 10;
     
-    // Arka planı dolduran rastgele noktalar
-    for (let i = 0; i < 250; i++) {
-        let x = Math.random() * 180 + 10;
-        let y = Math.random() * 180 + 10;
-        let r = Math.random() * 5 + 4; // Daha büyük noktalar
-        let color = palette.bgColors[Math.floor(Math.random() * palette.bgColors.length)];
-        
-        dots.push({x, y, r, color, isTarget: false});
+    let numberDots = [];
+
+    function addDigitDots(digit, offsetX) {
+        const pattern = DIGIT_PATTERNS[digit];
+        for (let row = 0; row < 5; row++) {
+            for (let col = 0; col < 3; col++) {
+                if (pattern[row * 3 + col] === 1) {
+                    // Her grid karesine 2x2 nokta ekleyerek dolgunlaştır
+                    for (let dx = 0; dx < 2; dx++) {
+                        for (let dy = 0; dy < 2; dy++) {
+                            let cx = offsetX + col * 12 + dx * 6 + (Math.random() * 2 - 1);
+                            let cy = 60 + row * 16 + dy * 8 + (Math.random() * 2 - 1);
+                            let r = Math.random() * 2 + 5; // Sayı noktaları daha büyük
+                            let color = palette.targetColors[Math.floor(Math.random() * palette.targetColors.length)];
+                            numberDots.push({ cx, cy, r, color });
+                        }
+                    }
+                }
+            }
+        }
     }
 
-    // Hedef sayıyı net belirten şekil matrisi (Merkezde konumlandırılmış metin alanı)
-    // Sayının okunabilmesi için SVG içerisine <text> ekleyip etrafını net noktalarla sarıyoruz
-    svgContent += `<g>`;
-    // Arka plan noktalarını bas
-    dots.forEach(d => {
-        svgContent += `<circle cx="${d.x}" cy="${d.y}" r="${d.r}" fill="${d.color}" />`;
+    addDigitDots(tens, 52);  // Onlar basamağı
+    addDigitDots(ones, 110); // Birler basamağı
+
+    // 2. Arka Plan Rastgele Noktaları (Sayının çakışmadığı yerlere)
+    let bgDots = [];
+    for (let i = 0; i < 220; i++) {
+        let cx = Math.random() * 180 + 10;
+        let cy = Math.random() * 180 + 10;
+        let r = Math.random() * 3 + 3;
+
+        // Daire alanının içinde kal ve rakam noktalarına çok yakın olma
+        let distFromCenter = Math.hypot(cx - 100, cy - 100);
+        if (distFromCenter < 90) {
+            let overlapsNumber = numberDots.some(nd => Math.hypot(nd.cx - cx, nd.cy - cy) < (nd.r + r + 1));
+            if (!overlapsNumber) {
+                let color = palette.bgColors[Math.floor(Math.random() * palette.bgColors.length)];
+                bgDots.push({ cx, cy, r, color });
+            }
+        }
+    }
+
+    // SVG içerisine önce arka plan noktalarını, sonra sayı noktalarını çiz
+    bgDots.forEach(d => {
+        svgContent += `<circle cx="${d.cx}" cy="${d.cy}" r="${d.r}" fill="${d.color}" />`;
+    });
+    numberDots.forEach(d => {
+        svgContent += `<circle cx="${d.cx}" cy="${d.cy}" r="${d.r}" fill="${d.color}" />`;
     });
 
-    // Sayıyı oluşturan net hedef noktalar (Merkez bölgede 2 haneli sayı)
-    let tens = Math.floor(targetNumber / 10);
-    let ones = targetNumber % 10;
-
-    svgContent += `<text x="100" y="130" font-size="95" font-weight="900" font-family="Arial, sans-serif" text-anchor="middle" fill="${palette.targetColors[0]}" opacity="0.95">${targetNumber}</text>`;
-    
-    // Sayının okunmasını Ishihara tarzında zorlaştırmak ama okunabilir kılmak için hafif maskeleme benekleri
-    for (let j = 0; j < 40; j++) {
-        let rx = 60 + Math.random() * 80;
-        let ry = 70 + Math.random() * 60;
-        let rr = Math.random() * 3 + 2;
-        svgContent += `<circle cx="${rx}" cy="${ry}" r="${rr}" fill="${palette.bgColors[1]}" opacity="0.6" />`;
-    }
-
-    svgContent += `</g></svg>`;
+    svgContent += `</svg>`;
     svgContainer.innerHTML = svgContent;
 }
 
 function generateIshiharaTouchSVG() {
     let svgContent = `<svg viewBox="0 0 200 200" width="100%" height="100%">`;
-    svgContent += `<circle cx="100" cy="100" r="100" fill="#4b5563" />`;
+    svgContent += `<circle cx="100" cy="100" r="100" fill="#374151" />`;
 
     let dots = [];
-    targetDotIndex = Math.floor(Math.random() * 30);
+    targetDotIndex = Math.floor(Math.random() * 24);
 
-    for (let i = 0; i < 30; i++) {
-        let angle = (i / 30) * 2 * Math.PI;
-        let distance = 35 + Math.random() * 40;
+    for (let i = 0; i < 24; i++) {
+        let angle = (i / 24) * 2 * Math.PI;
+        let distance = 35 + Math.random() * 45;
         let x = 100 + Math.cos(angle) * distance;
         let y = 100 + Math.sin(angle) * distance;
-        let r = 14;
+        let r = 13;
 
         let isTarget = (i === targetDotIndex);
-        let color = isTarget ? '#34d399' : '#b45309';
+        let color = isTarget ? '#10b981' : '#f59e0b';
 
         dots.push(`<circle class="touch-dot" data-index="${i}" cx="${x}" cy="${y}" r="${r}" fill="${color}" style="cursor:pointer;" />`);
     }
