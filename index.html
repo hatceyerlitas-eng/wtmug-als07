@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Renk Körlüğü Testi</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4f46e5">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Giriş Ekranı -->
+        <div id="welcome-screen" class="screen active">
+            <div class="card">
+                <h1>🎨 Renk Körlüğü Testi</h1>
+                <p>Bu test; renk görme yeteneğinizi ölçmek için dinamik olarak üretilen Ishihara tarzı plakalar kullanır.</p>
+                <ul class="features-list">
+                    <li>Toplam 10 aşamalı interaktif test akışı</li>
+                    <li>Dokunma tabanlı ve klavye girişli soru tipleri</li>
+                    <li>Klinik bazlı sonuç ve hata analizi</li>
+                    <li>PWA desteği ile çevrimdışı kullanım</li>
+                </ul>
+                <button id="start-btn" class="primary-btn">Teste Başla</button>
+            </div>
+        </div>
+
+        <!-- Soru Ekranı -->
+        <div id="quiz-screen" class="screen">
+            <div class="quiz-header">
+                <span id="step-indicator">Aşama 1 / 10</span>
+                <div class="progress-bar-container">
+                    <div id="progress-fill" class="progress-fill"></div>
+                </div>
+            </div>
+
+            <div class="card quiz-card">
+                <h2 id="question-instruction">Görseldeki gizli sayıyı giriniz:</h2>
+                
+                <!-- Dinamik SVG Alanı -->
+                <div id="svg-container" class="svg-container"></div>
+
+                <!-- Sayı Giriş Alanı -->
+                <div id="input-section" class="answer-section">
+                    <input type="number" id="answer-input" placeholder="Sayıyı yazın..." min="1" max="99">
+                    <button id="submit-answer-btn" class="primary-btn">Cevapla</button>
+                </div>
+
+                <!-- Dokunma/Seçim Bilgilendirme Alanı -->
+                <div id="touch-info" class="answer-section hidden">
+                    <p>Lütfen farklı renkteki şekle veya alana dokunmatik ekranınızla tıklayın.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sonuç Ekranı -->
+        <div id="result-screen" class="screen">
+            <div class="card result-card">
+                <h2>📊 Klinik Sonuç Analizi</h2>
+                <p id="result-summary" class="result-summary-text"></p>
+                
+                <div class="metrics-container">
+                    <h3>Hata Metrikleri ve Risk Dağılımı</h3>
+                    
+                    <div class="metric-item">
+                        <span>Kırmızı-Yeşil Körlüğü Riski</span>
+                        <div class="bar-bg"><div id="metric-rg" class="bar-fill red"></div></div>
+                    </div>
+                    
+                    <div class="metric-item">
+                        <span>Mavi-Sarı Körlüğü Riski</span>
+                        <div class="bar-bg"><div id="metric-by" class="bar-fill yellow"></div></div>
+                    </div>
+
+                    <div class="metric-item">
+                        <span>Tam Renk Körlüğü Riski</span>
+                        <div class="bar-bg"><div id="metric-total" class="bar-fill dark"></div></div>
+                    </div>
+                </div>
+
+                <button id="restart-btn" class="primary-btn">Testi Tekrarla</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        // Service Worker Kaydı
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker Kayıt Başarılı:', reg.scope))
+                    .catch(err => console.log('Service Worker Kayıt Hatası:', err));
+            });
+        }
+    </script>
+</body>
+</html>
