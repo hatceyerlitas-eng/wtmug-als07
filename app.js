@@ -54,7 +54,7 @@ function loadQuestion() {
         inputSection.classList.remove('hidden');
         touchInfo.classList.add('hidden');
         
-        correctTargetValue = Math.floor(Math.random() * 89) + 11; // 11-99 arası
+        correctTargetValue = Math.floor(Math.random() * 89) + 11; 
         generateIshiharaNumberSVG(correctTargetValue, currentStep);
     } else {
         currentQuestionType = 'touch';
@@ -66,30 +66,27 @@ function loadQuestion() {
     }
 }
 
-// Yüksek Kontrastlı Renk Paletleri
+// Mobil Uyumlu Yüksek Kontrastlı Renk Paletleri
 function getPalette(step) {
     if (step % 3 === 1) {
-        // Kırmızı (Arka plan) - Yeşil (Sayı)
         return {
-            bgColors: ['#dc2626', '#ef4444', '#f87171', '#b91c1c'],
-            targetColors: ['#16a34a', '#22c55e', '#4ade80', '#15803d']
+            bgColors: ['#dc2626', '#ef4444', '#f87171'], 
+            targetColors: ['#15803d', '#16a34a', '#22c55e'] 
         };
     } else if (step % 3 === 2) {
-        // Mavi (Arka plan) - Turuncu/Sarı (Sayı)
         return {
-            bgColors: ['#2563eb', '#3b82f6', '#60a5fa', '#1d4ed8'],
-            targetColors: ['#d97706', '#f59e0b', '#fbbf24', '#b45309']
+            bgColors: ['#2563eb', '#3b82f6', '#60a5fa'], 
+            targetColors: ['#b45309', '#d97706', '#f59e0b'] 
         };
     } else {
-        // Mor (Arka plan) - Açık Yeşil (Sayı)
         return {
-            bgColors: ['#7e22ce', '#9333ea', '#a855f7', '#6b21a8'],
-            targetColors: ['#22c55e', '#4ade80', '#86efac', '#15803d']
+            bgColors: ['#7e22ce', '#9333ea', '#a855f7'],
+            targetColors: ['#16a34a', '#22c55e', '#4ade80']
         };
     }
 }
 
-// 7-Segment Rakam Matris Tanımları (0-9 rakamlarını tam düzgün çizmek için)
+// Telefonda Net Okunabilen Kalın Matris Tanımları (5x3 Grid)
 const DIGIT_PATTERNS = {
     0: [1,1,1, 1,0,1, 1,0,1, 1,0,1, 1,1,1],
     1: [0,1,0, 0,1,0, 0,1,0, 0,1,0, 0,1,0],
@@ -103,13 +100,13 @@ const DIGIT_PATTERNS = {
     9: [1,1,1, 1,0,1, 1,1,1, 0,0,1, 1,1,1]
 };
 
-// Noktalardan Oluşan Düzgün Sayı Üreticisi
+// Mobil Optimizasyonlu Sayı Üretici (Daha büyük ve net benekler)
 function generateIshiharaNumberSVG(targetNumber, step) {
     const palette = getPalette(step);
-    let svgContent = `<svg viewBox="0 0 200 200" width="100%" height="100%">`;
+    // viewBox ölçeği mobilde netlik için optimize edildi
+    let svgContent = `<svg viewBox="0 0 200 200" width="100%" height="100%" style="border-radius: 50%;">`;
     svgContent += `<circle cx="100" cy="100" r="100" fill="${palette.bgColors[0]}" />`;
 
-    // 1. Düzgün Rakam Noktalarını Oluştur
     const tens = Math.floor(targetNumber / 10);
     const ones = targetNumber % 10;
     
@@ -120,43 +117,35 @@ function generateIshiharaNumberSVG(targetNumber, step) {
         for (let row = 0; row < 5; row++) {
             for (let col = 0; col < 3; col++) {
                 if (pattern[row * 3 + col] === 1) {
-                    // Her grid karesine 2x2 nokta ekleyerek dolgunlaştır
-                    for (let dx = 0; dx < 2; dx++) {
-                        for (let dy = 0; dy < 2; dy++) {
-                            let cx = offsetX + col * 12 + dx * 6 + (Math.random() * 2 - 1);
-                            let cy = 60 + row * 16 + dy * 8 + (Math.random() * 2 - 1);
-                            let r = Math.random() * 2 + 5; // Sayı noktaları daha büyük
-                            let color = palette.targetColors[Math.floor(Math.random() * palette.targetColors.length)];
-                            numberDots.push({ cx, cy, r, color });
-                        }
-                    }
+                    let cx = offsetX + col * 14;
+                    let cy = 55 + row * 18;
+                    let r = 7.5; // Mobilde kolay okunan büyük nokta boyutu
+                    let color = palette.targetColors[Math.floor(Math.random() * palette.targetColors.length)];
+                    numberDots.push({ cx, cy, r, color });
                 }
             }
         }
     }
 
-    addDigitDots(tens, 52);  // Onlar basamağı
-    addDigitDots(ones, 110); // Birler basamağı
+    addDigitDots(tens, 55);  
+    addDigitDots(ones, 112); 
 
-    // 2. Arka Plan Rastgele Noktaları (Sayının çakışmadığı yerlere)
+    // Arka plan noktaları (Sayıyı boğmayacak şekilde optimize edildi)
     let bgDots = [];
-    for (let i = 0; i < 220; i++) {
-        let cx = Math.random() * 180 + 10;
-        let cy = Math.random() * 180 + 10;
-        let r = Math.random() * 3 + 3;
+    for (let i = 0; i < 90; i++) { // Nokta sayısı telefonda karışıklığı önlemek için dengelendi
+        let angle = Math.random() * 2 * Math.PI;
+        let dist = 15 + Math.random() * 75;
+        let cx = 100 + Math.cos(angle) * dist;
+        let cy = 100 + Math.sin(angle) * dist;
+        let r = Math.random() * 3 + 5;
 
-        // Daire alanının içinde kal ve rakam noktalarına çok yakın olma
-        let distFromCenter = Math.hypot(cx - 100, cy - 100);
-        if (distFromCenter < 90) {
-            let overlapsNumber = numberDots.some(nd => Math.hypot(nd.cx - cx, nd.cy - cy) < (nd.r + r + 1));
-            if (!overlapsNumber) {
-                let color = palette.bgColors[Math.floor(Math.random() * palette.bgColors.length)];
-                bgDots.push({ cx, cy, r, color });
-            }
+        let overlapsNumber = numberDots.some(nd => Math.hypot(nd.cx - cx, nd.cy - cy) < 14);
+        if (!overlapsNumber) {
+            let color = palette.bgColors[Math.floor(Math.random() * palette.bgColors.length)];
+            bgDots.push({ cx, cy, r, color });
         }
     }
 
-    // SVG içerisine önce arka plan noktalarını, sonra sayı noktalarını çiz
     bgDots.forEach(d => {
         svgContent += `<circle cx="${d.cx}" cy="${d.cy}" r="${d.r}" fill="${d.color}" />`;
     });
@@ -173,14 +162,14 @@ function generateIshiharaTouchSVG() {
     svgContent += `<circle cx="100" cy="100" r="100" fill="#374151" />`;
 
     let dots = [];
-    targetDotIndex = Math.floor(Math.random() * 24);
+    targetDotIndex = Math.floor(Math.random() * 16);
 
-    for (let i = 0; i < 24; i++) {
-        let angle = (i / 24) * 2 * Math.PI;
-        let distance = 35 + Math.random() * 45;
+    for (let i = 0; i < 16; i++) {
+        let angle = (i / 16) * 2 * Math.PI;
+        let distance = 40 + Math.random() * 35;
         let x = 100 + Math.cos(angle) * distance;
         let y = 100 + Math.sin(angle) * distance;
-        let r = 13;
+        let r = 18; // Parmakla rahat dokunulabilmesi için büyük daireler
 
         let isTarget = (i === targetDotIndex);
         let color = isTarget ? '#10b981' : '#f59e0b';
@@ -202,7 +191,6 @@ function generateIshiharaTouchSVG() {
 function handleNumberSubmit() {
     let userVal = parseInt(answerInput.value);
     let isCorrect = (userVal === correctTargetValue);
-    
     evaluateAnswer(isCorrect, currentStep);
 }
 
@@ -248,7 +236,7 @@ function showResults() {
     if (scoreData.totalErrors <= 1) {
         summaryText = "Test sonucunuz normal renk görme yeteneğine sahip olduğunuzu göstermektedir.";
     } else if (rgPercent >= byPercent) {
-        summaryText = "Analiz sonucunda Kırmızı-Yeşil renk körlüğü (Protan/Deutan) şüphesi tespit edilmiştir.";
+        summaryText = "Analiz sonucunda Kırmızı-Yeşil renk körlüğü şüphesi tespit edilmiştir.";
     } else {
         summaryText = "Analiz sonucunda Mavi-Sarı renk körlüğü belirtileri görülmüştür.";
     }
