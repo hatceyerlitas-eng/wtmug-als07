@@ -66,68 +66,81 @@ function loadQuestion() {
     }
 }
 
-// Gerçek Ishihara Renk Tonları (Ton farkıyla ayırt edilen paletler)
+// Gerçek Ishihara Plaka Renk Paletleri (Klinik Tonlar)
 function getPalette(step) {
     if (step % 3 === 1) {
-        // Kırmızı-Yeşil Ishihara Tonları (Protan/Deutan testi)
+        // Kırmızı-Yeşil (Protan/Deutan) - Mat ve Geçişli Tonlar
         return {
-            bgColors: ['#b91c1c', '#dc2626', '#ef4444', '#991b1b', '#f87171'], 
-            targetColors: ['#15803d', '#16a34a', '#22c55e', '#166534', '#4ade80'] 
+            bgColors: ['#b91c1c', '#dc2626', '#ef4444', '#991b1b', '#f87171', '#7f1d1d'], 
+            targetColors: ['#15803d', '#16a34a', '#22c55e', '#166534', '#4ade80', '#14532d'] 
         };
     } else if (step % 3 === 2) {
-        // Mavi-Turuncu Ishihara Tonları (Tritan testi)
+        // Mavi-Turuncu (Tritan) Tonları
         return {
-            bgColors: ['#1d4ed8', '#2563eb', '#3b82f6', '#1e40af', '#60a5fa'], 
-            targetColors: ['#c2410c', '#ea580c', '#f97316', '#9a3412', '#fb923c'] 
+            bgColors: ['#1d4ed8', '#2563eb', '#3b82f6', '#1e40af', '#60a5fa', '#1e3a8a'], 
+            targetColors: ['#c2410c', '#ea580c', '#f97316', '#9a3412', '#fb923c', '#7c2d12'] 
         };
     } else {
-        // Kahverengi-Yeşil Klasik Ishihara Tonları
+        // Klasik Kahve-Yeşil Ishihara Kombinasyonu
         return {
-            bgColors: ['#854d0e', '#a16207', '#ca8a04', '#713f12'],
-            targetColors: ['#15803d', '#16a34a', '#22c55e', '#14532d']
+            bgColors: ['#854d0e', '#a16207', '#ca8a04', '#713f12', '#b45309'],
+            targetColors: ['#16a34a', '#15803d', '#22c55e', '#047857', '#10b981']
         };
     }
 }
 
-// Gerçekçi Ishihara Sayı Maskesi (Organik ve Dağınık Nokta Dağılımı)
+// Organik Ishihara Sayı Üretici (Gerçekçi Mozaik Dağılımı)
 function generateIshiharaNumberSVG(targetNumber, step) {
     const palette = getPalette(step);
     let svgContent = `<svg viewBox="0 0 200 200" width="100%" height="100%" style="border-radius: 50%;">`;
     
-    // Zemin ana rengi
+    // Zemin Katmanı (Dairesel Alan)
     svgContent += `<circle cx="100" cy="100" r="100" fill="${palette.bgColors[0]}" />`;
 
-    // Sayıyı oluşturan hatları matematiksel eğrilerle (koordinat bölgeleriyle) simüle edelim
     const tens = Math.floor(targetNumber / 10);
     const ones = targetNumber % 10;
 
-    // Noktaları tutacak dizi
     let dots = [];
-    let totalDots = 280; // Yoğun ama mobilde okunabilir miktar
+    let totalDots = 320; // Tam yoğunlukta doğal doku
+
+    // Sayıların matematiksel hat hatası minimal, organik hatları maksimize edilmiştir
+    function isInNumberShape(x, y) {
+        // Onlar Basamağı Bölgesi
+        let inTensBox = (x > 50 && x < 92 && y > 45 && y < 155);
+        let inTensHole = (tens !== 1 && x > 62 && x < 80 && y > 75 && y < 125);
+        let tensMatch = inTensBox && !inTensHole;
+
+        if (tens === 1) {
+            tensMatch = (x > 65 && x < 85 && y > 45 && y < 155);
+        }
+
+        // Birler Basamağı Bölgesi
+        let inOnesBox = (x > 108 && x < 150 && y > 45 && y < 155);
+        let inOnesHole = (ones !== 1 && x > 120 && x < 138 && y > 75 && y < 125);
+        let onesMatch = inOnesBox && !inOnesHole;
+
+        if (ones === 1) {
+            onesMatch = (x > 122 && x < 142 && y > 45 && y < 155);
+        }
+
+        return tensMatch || onesMatch;
+    }
 
     for (let i = 0; i < totalDots; i++) {
         let x = Math.random() * 170 + 15;
         let y = Math.random() * 170 + 15;
-        let r = Math.random() * 4.5 + 3.5; // Farklı boyutlarda doğal daireler
+        let r = Math.random() * 4.2 + 2.8; // Doğal boyutsal varyasyon
 
         let distFromCenter = Math.hypot(x - 100, y - 100);
-        if (distFromCenter > 92) continue; // Daire dışına taşmayı önle
+        if (distFromCenter > 95) continue; 
 
-        // Sayı bölgesi kontrolü (Onlar ve Birler basamağının kaba koordinat kalıpları)
-        let isTensArea = (x > 50 && x < 95 && y > 50 && y < 150 && !(tens === 1 && x > 75));
-        let isOnesArea = (x > 105 && x < 150 && y > 50 && y < 150 && !(ones === 1 && x > 130));
-        
-        // Rakamların tipine göre iç boşluk maskeleri (Örn: 0, 4, 6, 8, 9 için orta boşluk)
-        let inTensHole = (tens !== 1 && x > 62 && x < 83 && y > 80 && y < 120);
-        let inOnesHole = (ones !== 1 && x > 117 && x < 138 && y > 80 && y < 120);
+        let isShape = isInNumberShape(x, y);
 
-        let isNumberShape = (isTensArea && !inTensHole) || (isOnesArea && !inOnesHole);
+        // Ishihara göz yanılması için hafif rastgelelik (noise)
+        if (Math.random() < 0.08) isShape = !isShape;
 
-        // Doğal Ishihara dokusu için hafif rastgelelik ve geçişler katalım
-        if (Math.random() < 0.12) isNumberShape = !isNumberShape; 
-
-        let colorPalette = isNumberShape ? palette.targetColors : palette.bgColors;
-        let color = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+        let activePalette = isShape ? palette.targetColors : palette.bgColors;
+        let color = activePalette[Math.floor(Math.random() * activePalette.length)];
 
         dots.push({ x, y, r, color });
     }
@@ -145,17 +158,18 @@ function generateIshiharaTouchSVG() {
     svgContent += `<circle cx="100" cy="100" r="100" fill="#713f12" />`;
 
     let dots = [];
-    targetDotIndex = Math.floor(Math.random() * 22);
+    targetDotIndex = Math.floor(Math.random() * 26);
 
-    for (let i = 0; i < 22; i++) {
-        let angle = (i / 22) * 2 * Math.PI;
-        let distance = 35 + Math.random() * 45;
+    for (let i = 0; i < 26; i++) {
+        let angle = (i / 26) * 2 * Math.PI;
+        let distance = 30 + Math.random() * 50;
         let x = 100 + Math.cos(angle) * distance;
         let y = 100 + Math.sin(angle) * distance;
-        let r = 14 + Math.random() * 4;
+        let r = 12 + Math.random() * 5;
 
         let isTarget = (i === targetDotIndex);
-        let color = isTarget ? '#16a34a' : '#ca8a04'; // Doğru alan hafif ton farkıyla gizlendi
+        // Dokunma testinde de ton farkıyla gizleme
+        let color = isTarget ? '#16a34a' : '#ca8a04'; 
 
         dots.push(`<circle class="touch-dot" data-index="${i}" cx="${x}" cy="${y}" r="${r}" fill="${color}" style="cursor:pointer;" />`);
     }
@@ -214,15 +228,4 @@ function showResults() {
 
     document.getElementById('metric-rg').style.width = `${rgPercent}%`;
     document.getElementById('metric-by').style.width = `${byPercent}%`;
-    document.getElementById('metric-total').style.width = `${totalPercent}%`;
-
-    if (scoreData.totalErrors <= 1) {
-        summaryText = "Test sonucunuz normal renk görme yeteneğine sahip olduğunuzu göstermektedir.";
-    } else if (rgPercent >= byPercent) {
-        summaryText = "Analiz sonucunda Kırmızı-Yeşil renk körlüğü şüphesi tespit edilmiştir.";
-    } else {
-        summaryText = "Analiz sonucunda Mavi-Sarı renk körlüğü belirtileri görülmüştür.";
-    }
-
-    document.getElementById('result-summary').textContent = summaryText;
-}
+    document.getElementById('metric-total').
